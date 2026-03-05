@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="description" content="5-agent Mistral AI pipeline that transforms GitHub PRs and commits into SEO-optimised content. Mistral AI Hackathon 2026 — Keshav Purohit (TechMunda)"/>
+<meta name="author" content="Keshav Purohit (TechMunda)"/>
+<title>SEO_CONTENT FOR_AGENTS // REPOLORE — Mistral Hackathon 2026</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --g:#00ff88;--gg:#00cc6a;--pu:#c84bff;--cy:#00cfff;--gold:#ffd700;
+  --bg:#04080d;--bg2:#080e18;--bg3:#0d1622;
+  --br:rgba(0,255,136,0.15);--txt:#8aa4c0;--txtb:#eaf4ff;
+  --mono:'Share Tech Mono',monospace;--disp:'Orbitron',monospace;--body:'Rajdhani',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--txt);font-family:var(--body);overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9999;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--gg);border-radius:3px;}
+
+/* ── ANIMATIONS ── */
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.75);}}
+@keyframes gridshift{0%{transform:translateY(0);}100%{transform:translateY(55px);}}
+@keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-22px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+@keyframes progress{from{width:0;}to{width:100%;}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(0,255,136,0.3);}50%{box-shadow:0 0 40px rgba(0,255,136,0.6);}}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(35px);transition:opacity 0.7s ease,transform 0.7s ease;}
+.reveal.visible{opacity:1;transform:none;}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:13px 40px;background:rgba(4,8,13,0.6);backdrop-filter:blur(16px);border-bottom:1px solid transparent;transition:all 0.3s;}
+nav.scrolled{background:rgba(4,8,13,0.97);border-bottom:1px solid var(--br);}
+.nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.nav-dot{width:9px;height:9px;background:var(--g);border-radius:50%;box-shadow:0 0 12px var(--g);animation:pulse 2s infinite;flex-shrink:0;}
+.nav-name{font-family:var(--disp);font-weight:700;font-size:.92rem;color:var(--txtb);letter-spacing:.05em;}
+.nav-badge{font-family:var(--mono);font-size:.5rem;color:var(--g);background:rgba(0,255,136,.08);padding:2px 7px;border:1px solid var(--br);letter-spacing:.1em;}
+.nav-links{display:flex;gap:26px;list-style:none;}
+.nav-links a{font-family:var(--mono);font-size:.65rem;color:var(--txt);text-decoration:none;letter-spacing:.12em;transition:color .2s;}
+.nav-links a:hover{color:var(--g);}
+.btn-outline-sm{font-family:var(--mono);font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;padding:8px 18px;background:transparent;color:var(--g);border:1px solid rgba(0,255,136,.35);text-decoration:none;display:inline-block;transition:all .22s;}
+.btn-outline-sm:hover{background:rgba(0,255,136,.07);border-color:var(--g);transform:translateY(-2px);}
+
+/* ── HERO ── */
+#home{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:130px 40px 80px;text-align:center;position:relative;overflow:hidden;}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(var(--br) 1px,transparent 1px),linear-gradient(90deg,var(--br) 1px,transparent 1px);background-size:55px 55px;animation:gridshift 25s linear infinite;}
+.hero-glow{position:absolute;width:1000px;height:600px;background:radial-gradient(ellipse,rgba(0,255,136,.06) 0%,rgba(200,75,255,.03) 40%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+.corner{position:absolute;width:38px;height:38px;opacity:.35;}
+.corner-tl{top:88px;left:38px;border-top:2px solid var(--g);border-left:2px solid var(--g);}
+.corner-tr{top:88px;right:38px;border-top:2px solid var(--g);border-right:2px solid var(--g);}
+.hero-badges{position:relative;animation:fadeInDown .8s ease both;margin-bottom:34px;}
+.hbadge{font-family:var(--mono);font-size:.62rem;padding:5px 13px;letter-spacing:.16em;margin-right:8px;margin-bottom:8px;display:inline-block;border-radius:1px;}
+.hero-title{position:relative;animation:fadeInUp .8s .15s ease both;line-height:1;}
+.ht1{display:block;font-family:var(--disp);font-weight:900;font-size:clamp(2.2rem,7.5vw,5.5rem);color:var(--txtb);letter-spacing:-.02em;}
+.ht2{display:block;font-family:var(--disp);font-weight:900;font-size:clamp(2.2rem,7.5vw,5.5rem);color:var(--g);letter-spacing:-.02em;text-shadow:0 0 50px rgba(0,255,136,.35),0 0 100px rgba(0,255,136,.15);}
+.hero-desc{font-family:var(--mono);font-size:clamp(.7rem,1.5vw,.88rem);color:var(--txt);max-width:640px;line-height:2;margin:32px auto 44px;animation:fadeInUp .8s .3s ease both;position:relative;min-height:68px;}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;animation:fadeInUp .8s .5s ease both;position:relative;}
+.btn-green{font-family:var(--mono);font-size:.78rem;letter-spacing:.13em;text-transform:uppercase;padding:13px 30px;background:var(--g);color:var(--bg);text-decoration:none;display:inline-block;transition:all .22s;font-weight:bold;}
+.btn-green:hover{background:#00e87a;box-shadow:0 0 26px rgba(0,255,136,.45);transform:translateY(-2px);}
+.btn-outline{font-family:var(--mono);font-size:.78rem;letter-spacing:.13em;text-transform:uppercase;padding:13px 30px;background:transparent;color:var(--g);border:1px solid rgba(0,255,136,.35);text-decoration:none;display:inline-block;transition:all .22s;}
+.btn-outline:hover{background:rgba(0,255,136,.07);border-color:var(--g);transform:translateY(-2px);}
+.hero-stats{display:flex;gap:52px;margin-top:70px;padding-top:34px;border-top:1px solid var(--br);animation:fadeInUp .8s .7s ease both;position:relative;flex-wrap:wrap;justify-content:center;}
+.stat-num{display:block;font-family:var(--disp);font-size:1.85rem;font-weight:900;color:var(--g);}
+.stat-label{font-family:var(--mono);font-size:.58rem;letter-spacing:.18em;color:var(--txt);text-transform:uppercase;display:block;margin-top:4px;}
+
+/* ── TICKER ── */
+.ticker-bar{background:var(--bg2);border-top:1px solid var(--br);border-bottom:1px solid var(--br);padding:10px 0;overflow:hidden;white-space:nowrap;}
+.ticker-inner{display:inline-flex;gap:52px;animation:ticker 42s linear infinite;font-family:var(--mono);font-size:.67rem;color:var(--gg);letter-spacing:.1em;}
+.ticker-inner span .arrow{color:var(--g);}
+
+/* ── SECTIONS ── */
+section{padding:100px 40px;}
+.inner{max-width:1200px;margin:0 auto;}
+.sec-label{font-family:var(--mono);font-size:.67rem;color:var(--g);letter-spacing:.28em;margin-bottom:13px;text-transform:uppercase;}
+.sec-label::before{content:'// ';color:var(--g);}
+.sec-title{font-family:var(--disp);font-size:clamp(1.7rem,4vw,2.85rem);font-weight:700;color:var(--txtb);line-height:1.12;margin-bottom:15px;}
+.sec-desc{font-family:var(--body);font-size:1.05rem;color:var(--txt);max-width:680px;line-height:1.8;margin-bottom:52px;}
+
+/* ── PROBLEM CARDS ── */
+.grid-4{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px;}
+.pcard{background:var(--bg2);border:1px solid var(--br);padding:26px;position:relative;overflow:hidden;transition:all .25s;cursor:default;}
+.pcard:hover{background:var(--bg3);border-color:rgba(0,255,136,.45);}
+.pcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--g),transparent);opacity:0;transition:opacity .3s;}
+.pcard:hover::before{opacity:1;}
+.pcard-icon{font-size:1.8rem;margin-bottom:14px;}
+.prob-label{font-family:var(--mono);font-size:.6rem;color:#ff6b6b;margin-bottom:9px;letter-spacing:.1em;}
+.sol-label{font-family:var(--mono);font-size:.6rem;color:var(--g);margin-bottom:9px;letter-spacing:.1em;}
+.impact-badge{font-family:var(--mono);font-size:.58rem;color:var(--g);background:rgba(0,255,136,.07);padding:4px 12px;border:1px solid rgba(0,255,136,.2);display:inline-block;margin-top:14px;}
+.pcard p{font-family:var(--body);font-size:.9rem;color:var(--txt);line-height:1.6;}
+
+/* ── JUDGING CALLOUT ── */
+.judging-box{margin-top:52px;background:var(--bg3);border:1px solid rgba(0,255,136,.22);padding:32px 36px;position:relative;}
+.judging-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--g),transparent);}
+.judging-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px;margin-top:16px;}
+.judging-grid .jt{font-family:var(--mono);font-size:.62rem;color:var(--g);margin-bottom:8px;}
+.judging-grid p{font-family:var(--body);font-size:.88rem;color:var(--txt);line-height:1.65;}
+
+/* ── AGENT PIPELINE ── */
+#agent{background:var(--bg2);border-top:1px solid var(--br);border-bottom:1px solid var(--br);}
+.pipeline-row{display:flex;align-items:stretch;gap:0;overflow-x:auto;margin-bottom:32px;padding-bottom:6px;}
+.pipeline-step{flex:1;min-width:130px;display:flex;align-items:center;}
+.ps-card{flex:1;background:var(--bg);border:1px solid var(--br);padding:18px 14px;cursor:pointer;transition:all .3s;text-align:center;}
+.ps-card.active{background:var(--bg3);border-color:var(--g);box-shadow:0 0 28px rgba(0,255,136,.13);}
+.ps-icon{font-size:1.5rem;margin-bottom:6px;}
+.ps-id{font-family:var(--mono);font-size:.57rem;color:var(--txt);letter-spacing:.1em;}
+.ps-id.active{color:var(--g);}
+.ps-title{font-family:var(--mono);font-size:.58rem;color:var(--txt);margin-top:3px;letter-spacing:.04em;}
+.ps-title.active{color:var(--txtb);}
+.ps-bar{width:100%;height:2px;background:var(--g);margin-top:8px;animation:progress 2.4s linear;}
+.ps-arrow{padding:0 5px;color:rgba(255,255,255,.12);font-family:var(--mono);font-size:.85rem;flex-shrink:0;transition:color .3s;}
+.ps-arrow.done{color:var(--g);}
+.agent-detail{background:var(--bg3);border:1px solid var(--br);padding:32px 36px;position:relative;}
+.agent-detail::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--g),transparent);}
+.agent-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;}
+.agent-id{font-family:var(--mono);font-size:.62rem;color:var(--g);letter-spacing:.18em;margin-bottom:10px;}
+.agent-desc{font-family:var(--body);font-size:1.05rem;color:var(--txt);line-height:1.8;}
+.tech-label{font-family:var(--mono);font-size:.6rem;color:var(--txt);letter-spacing:.15em;margin-bottom:12px;}
+.tech-tags{display:flex;gap:9px;flex-wrap:wrap;}
+.tag{font-family:var(--mono);font-size:.57rem;padding:3px 9px;border:1px solid rgba(0,255,136,.27);color:var(--g);letter-spacing:.1em;}
+.tag-pu{border-color:rgba(200,75,255,.27);color:var(--pu);}
+.tech-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-top:28px;}
+.tpill{background:var(--bg);border:1px solid var(--br);padding:14px 16px;}
+.tpill-label{font-family:var(--mono);font-size:.57rem;color:var(--txt);letter-spacing:.14em;margin-bottom:5px;}
+.tpill-val{font-family:var(--mono);font-size:.75rem;font-weight:bold;}
+
+/* ── PRIZES ── */
+.prize-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+.pz-card{padding:26px 22px;position:relative;overflow:hidden;transition:all .25s;cursor:default;border:1px solid;}
+.pz-title{font-family:var(--mono);font-size:.58rem;letter-spacing:.2em;margin-bottom:10px;}
+.pz-val{font-family:var(--disp);font-size:1.45rem;font-weight:900;margin-bottom:7px;}
+.pz-sub{font-family:var(--body);font-size:.84rem;color:var(--txt);}
+.pz-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.global-strip{margin-top:32px;background:var(--bg3);border:1px solid rgba(255,215,0,.22);padding:22px 30px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.gs-icon{font-size:1.8rem;}
+.gs-title{font-family:var(--mono);font-size:.65rem;color:var(--gold);letter-spacing:.14em;margin-bottom:5px;}
+.gs-desc{font-family:var(--body);font-size:.95rem;color:var(--txt);}
+
+/* ── ABOUT ── */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+.about-infogrid{display:grid;grid-template-columns:1fr 1fr;gap:2px;}
+.info-cell{background:var(--bg3);border:1px solid var(--br);padding:16px 14px;transition:all .25s;}
+.info-cell:hover{border-color:rgba(0,255,136,.45);}
+.info-key{font-family:var(--mono);font-size:.57rem;color:var(--g);letter-spacing:.2em;margin-bottom:5px;}
+.info-val{font-family:var(--body);font-weight:600;font-size:.93rem;color:var(--txtb);}
+.about-btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px;}
+
+/* ── REPOS ── */
+.repos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;}
+.repo-card{background:var(--bg2);border:1px solid var(--br);padding:24px;display:block;text-decoration:none;position:relative;overflow:hidden;transition:all .25s;}
+.repo-card:hover{background:var(--bg3);border-color:rgba(0,255,136,.45);transform:translateY(-4px);}
+.repo-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--g),transparent);opacity:0;transition:opacity .3s;}
+.repo-card:hover::before{opacity:1;}
+.repo-head{display:flex;justify-content:space-between;margin-bottom:9px;}
+.repo-name{font-family:var(--mono);font-size:.74rem;color:var(--txtb);}
+.repo-stars{font-family:var(--mono);font-size:.65rem;color:var(--g);}
+.repo-desc{font-family:var(--body);font-size:.88rem;color:var(--txt);line-height:1.6;margin-bottom:13px;}
+.repo-tags{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.repo-lang{margin-left:auto;font-family:var(--mono);font-size:.58rem;color:#2d4060;}
+
+/* ── SKILLS ── */
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:9px;}
+.sk-card{background:var(--bg);border:1px solid var(--br);padding:16px 12px;text-align:center;transition:all .22s;cursor:default;}
+.sk-card:hover{background:var(--bg3);border-color:rgba(0,255,136,.45);}
+.sk-icon{font-size:1.55rem;margin-bottom:6px;}
+.sk-name{font-family:var(--mono);font-size:.6rem;color:var(--txt);letter-spacing:.08em;margin-bottom:7px;transition:color .2s;}
+.sk-card:hover .sk-name{color:var(--txtb);}
+.sk-bar-bg{height:2px;background:var(--bg3);}
+.sk-bar{height:2px;background:linear-gradient(90deg,var(--g),var(--cy));width:0;transition:width 1.2s ease;}
+
+/* ── TERMINAL ── */
+.terminal{background:#000;border:1px solid var(--br);box-shadow:0 0 50px rgba(0,255,136,.07);}
+.term-bar{background:var(--bg3);padding:9px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--br);}
+.tdot{width:10px;height:10px;border-radius:50%;}
+.term-title{font-family:var(--mono);font-size:.6rem;color:#2d4060;margin:0 auto;}
+.term-body{padding:20px 22px;font-family:var(--mono);font-size:.7rem;line-height:2.1;min-height:260px;}
+.t-cursor{display:inline-block;border-left:2px solid var(--g);animation:blink 1s step-end infinite;margin-left:2px;}
+
+/* ── CONTACT ── */
+#contact{background:var(--bg);border-top:1px solid var(--br);}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;}
+.contact-links{margin-top:26px;display:flex;flex-direction:column;gap:11px;}
+.cl-row{display:flex;gap:14px;align-items:center;text-decoration:none;transition:opacity .2s;}
+.cl-row:hover{opacity:.7;}
+.cl-key{font-family:var(--mono);font-size:.57rem;color:var(--g);letter-spacing:.18em;min-width:78px;}
+.cl-val{font-family:var(--mono);font-size:.7rem;color:var(--txt);}
+.form-label{font-family:var(--mono);font-size:.57rem;color:var(--g);letter-spacing:.18em;display:block;margin-bottom:5px;}
+.form-input{background:var(--bg3);border:1px solid var(--br);padding:11px 14px;color:var(--txtb);font-family:var(--mono);font-size:.73rem;outline:none;width:100%;box-sizing:border-box;transition:border-color .2s;}
+.form-input:focus{border-color:var(--g);}
+textarea.form-input{resize:vertical;}
+.form-wrap{display:flex;flex-direction:column;gap:13px;}
+.form-section-label{font-family:var(--mono);font-size:.62rem;color:var(--g);letter-spacing:.2em;margin-bottom:4px;}
+.btn-submit{font-family:var(--mono);font-size:.76rem;letter-spacing:.13em;text-transform:uppercase;padding:13px;background:var(--g);color:var(--bg);border:none;cursor:pointer;font-weight:bold;transition:all .2s;width:100%;}
+.btn-submit:hover{box-shadow:0 0 24px rgba(0,255,136,.4);}
+.btn-submit:disabled{background:var(--gg);cursor:wait;}
+.form-status{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;}
+
+/* ── FOOTER ── */
+footer{background:var(--bg2);border-top:1px solid var(--br);padding:50px 40px 26px;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:52px;padding-bottom:34px;border-bottom:1px solid var(--br);}
+.f-logo{display:flex;align-items:center;gap:9px;margin-bottom:13px;}
+.f-dot{width:8px;height:8px;background:var(--g);border-radius:50%;box-shadow:0 0 8px var(--g);}
+.f-name{font-family:var(--disp);font-weight:700;font-size:.95rem;color:var(--txtb);}
+.f-hack{font-family:var(--mono);font-size:.5rem;color:var(--g);border:1px solid var(--br);padding:2px 6px;letter-spacing:.1em;}
+.f-desc{font-family:var(--body);font-size:.88rem;color:var(--txt);line-height:1.7;max-width:330px;margin-bottom:16px;}
+.f-badges{display:flex;gap:8px;flex-wrap:wrap;}
+.f-badge{font-family:var(--mono);font-size:.55rem;padding:3px 8px;letter-spacing:.07em;}
+.f-col-title{font-family:var(--mono);font-size:.6rem;color:var(--g);letter-spacing:.2em;margin-bottom:16px;}
+.f-col a{display:block;font-family:var(--body);font-size:.88rem;color:var(--txt);text-decoration:none;margin-bottom:8px;transition:color .2s;}
+.f-col a:hover{color:var(--g);}
+.footer-bottom{padding-top:22px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.f-copy{font-family:var(--mono);font-size:.6rem;color:#1e3050;}
+.f-copy span{color:var(--g);}
+
+/* ── BACK TO TOP ── */
+#btt{position:fixed;bottom:28px;right:28px;width:40px;height:40px;background:var(--bg2);border:1px solid var(--br);color:var(--g);display:flex;align-items:center;justify-content:center;text-decoration:none;z-index:500;font-size:.95rem;opacity:0;transform:translateY(14px);transition:all .3s;pointer-events:none;}
+#btt.visible{opacity:1;transform:none;pointer-events:auto;}
+#btt:hover{background:var(--g);color:var(--bg);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:860px){
+  .nav-links{display:none;}
+  .about-grid,.contact-grid,.agent-detail-grid{grid-template-columns:1fr!important;gap:40px!important;}
+}
+@media(max-width:600px){
+  section{padding:60px 20px!important;}
+  nav{padding:12px 20px!important;}
+  .hero-stats{gap:24px;}
+  .footer-grid{grid-template-columns:1fr!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav id="nav">
+  <a href="#home" class="nav-logo">
+    <div class="nav-dot"></div>
+    <span class="nav-name">REPOLORE</span>
+    <span class="nav-badge">HACK_2026</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#home">HOME</a></li>
+    <li><a href="#problem">PROBLEM</a></li>
+    <li><a href="#agent">AGENT</a></li>
+    <li><a href="#repos">REPOS</a></li>
+    <li><a href="#contact">CONTACT</a></li>
+  </ul>
+  <a href="https://github.com/Kpurohit007" target="_blank" class="btn-outline-sm">// GITHUB</a>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="home">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-tr"></div>
+
+  <div class="hero-badges">
+    <span class="hbadge" style="color:#ffd700;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.35);">🏆 MISTRAL AI WORLDWIDE HACKATHON 2026</span>
+    <span class="hbadge" style="color:#00cfff;background:rgba(0,207,255,.08);border:1px solid rgba(0,207,255,.35);">FEB 28 – MAR 1 // LIVE NOW</span>
+    <span class="hbadge" style="color:#c84bff;background:rgba(200,75,255,.08);border:1px solid rgba(200,75,255,.35);">$200K+ IN PRIZES</span>
+  </div>
+
+  <h1 class="hero-title">
+    <span class="ht1">SEO_CONTENT</span>
+    <span class="ht2">FOR_AGENTS</span>
+  </h1>
+
+  <p class="hero-desc">
+    <span style="color:var(--g)">&gt; </span><span id="typed"></span><span class="t-cursor"></span>
+  </p>
+
+  <div class="hero-btns">
+    <a href="https://github.com/Kpurohit007" target="_blank" class="btn-green">VIEW_ON_GITHUB</a>
+    <a href="#agent" class="btn-outline">EXPLORE_AGENT →</a>
+    <a href="#problem" class="btn-outline">WHY_THIS_WINS</a>
+  </div>
+
+  <div class="hero-stats" id="stats-row">
+    <div><span class="stat-num" data-target="2400" data-sfx="+">0</span><span class="stat-label">GITHUB STARS</span></div>
+    <div><span class="stat-num" data-target="1000" data-sfx="+">0</span><span class="stat-label">HACKERS WORLDWIDE</span></div>
+    <div><span class="stat-num" data-target="200" data-sfx="K+">0</span><span class="stat-label">PRIZE POOL</span></div>
+    <div><span class="stat-num">48<span style="font-size:1rem">HRS</span></span><span class="stat-label">TO BUILD IT</span></div>
+  </div>
+</section>
+
+<!-- ── TICKER ── -->
+<div class="ticker-bar">
+  <div class="ticker-inner" id="ticker"></div>
+</div>
+
+<!-- ── PROBLEM ── -->
+<section id="problem" style="background:var(--bg);">
+  <div class="inner">
+    <div class="reveal">
+      <div class="sec-label">THE_PROBLEM_WE_SOLVE</div>
+      <h2 class="sec-title">WHY THIS PROJECT <span style="color:var(--g)">WINS</span></h2>
+      <p class="sec-desc">Developers produce massive value through code — but it stays invisible. No blog, no SEO, no discoverability. This is the <span style="color:var(--g)">core problem</span> we solve with a 5-agent Mistral AI pipeline.</p>
+    </div>
+    <div class="grid-4" id="problem-cards"></div>
+    <div class="judging-box reveal">
+      <div class="sec-label" style="margin-bottom:0">HACKATHON_JUDGING_CRITERIA_ALIGNMENT</div>
+      <div class="judging-grid" id="judging-grid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── AGENT PIPELINE ── -->
+<section id="agent">
+  <div class="inner">
+    <div class="reveal" style="text-align:center;margin-bottom:60px;">
+      <div class="sec-label">MULTI_AGENT_ARCHITECTURE</div>
+      <h2 class="sec-title">THE 5-AGENT <span style="color:var(--g)">MISTRAL PIPELINE</span></h2>
+      <p style="font-family:var(--body);font-size:1.05rem;color:var(--txt);max-width:600px;margin:0 auto;line-height:1.8;">
+        Each Mistral agent has one job. Together they form a fully autonomous content factory — observable via <span style="color:var(--g)">W&amp;B Weave</span> and voiced by <span style="color:var(--pu)">ElevenLabs</span>.
+      </p>
+    </div>
+    <div class="pipeline-row" id="pipeline-row"></div>
+    <div class="agent-detail reveal">
+      <div class="agent-detail-grid">
+        <div>
+          <div class="agent-id" id="agent-id">AGENT 01 // REPO_SCANNER</div>
+          <p class="agent-desc" id="agent-desc">Connects to GitHub via function calling. Ingests commits, PRs, diffs, and release tags in real-time.</p>
+        </div>
+        <div>
+          <div class="tech-label">TECH_STACK</div>
+          <div class="tech-tags" id="agent-tech"></div>
+        </div>
+      </div>
+    </div>
+    <div class="tech-grid" id="tech-pills"></div>
+  </div>
+</section>
+
+<!-- ── PRIZES ── -->
+<section id="prizes" style="background:var(--bg);">
+  <div class="inner">
+    <div class="reveal" style="text-align:center;margin-bottom:48px;">
+      <div class="sec-label">PRIZES_WE_ARE_TARGETING</div>
+      <h2 class="sec-title">COMPETE FOR <span style="color:var(--gold)">$200K+</span></h2>
+    </div>
+    <div class="prize-grid" id="prize-grid"></div>
+    <div class="global-strip reveal">
+      <div class="gs-icon">🌍</div>
+      <div>
+        <div class="gs-title">GLOBAL FINAL — MARCH 9, 2026 // YOUTUBE LIVE</div>
+        <p class="gs-desc">City winners advance to the global final. Grand Winner gets $10,000 cash + $15,000 credits + <span style="color:var(--g)">a hiring opportunity at Mistral AI.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── ABOUT ── -->
+<section id="about" style="background:var(--bg2);border-top:1px solid var(--br);">
+  <div class="inner">
+    <div class="about-grid reveal">
+      <div>
+        <div class="sec-label">ABOUT_THE_BUILDER</div>
+        <h2 class="sec-title">KESHAV <span style="color:var(--g)">PUROHIT</span></h2>
+        <p style="font-family:var(--body);font-size:1.05rem;color:var(--txt);line-height:1.85;margin-bottom:16px;">
+          Full Stack Developer &amp; MCA Student at <strong style="color:var(--txtb)">MIT WPU Pune</strong>. Founder of <strong style="color:var(--g)">TechMunda</strong>. Currently shipping <strong style="color:var(--cy)">MAA Kiradu Die Cutting Android App</strong> while diving deep into LLM, AWS &amp; GenAI pipelines.
+        </p>
+        <p style="font-family:var(--body);font-size:1.05rem;color:var(--txt);line-height:1.85;margin-bottom:30px;">
+          This hackathon project combines my background in <strong style="color:var(--g)">AI/ML crop forecasting</strong>, full-stack development &amp; passion for <strong style="color:var(--pu)">multi-agent autonomous systems</strong> into one unified Mistral submission targeting the global prize.
+        </p>
+        <div class="about-btns">
+          <a href="https://techmundaportfolio.netlify.app/" target="_blank" class="btn-green" style="font-size:.68rem;padding:8px 18px;">PORTFOLIO</a>
+          <a href="https://www.linkedin.com/in/keshav-purohit-a2a36525b/" target="_blank" class="btn-outline" style="font-size:.68rem;padding:8px 18px;">LINKEDIN</a>
+          <a href="https://github.com/Kpurohit007" target="_blank" class="btn-outline" style="font-size:.68rem;padding:8px 18px;">GITHUB</a>
+        </div>
+      </div>
+      <div class="about-infogrid" id="about-grid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── REPOS ── -->
+<section id="repos" style="background:var(--bg);">
+  <div class="inner">
+    <div class="reveal" style="margin-bottom:48px;">
+      <div class="sec-label">REPOSITORIES</div>
+      <h2 class="sec-title">POPULAR <span style="color:var(--g)">PROJECTS</span></h2>
+      <p style="font-family:var(--body);font-size:1.05rem;color:var(--txt);max-width:520px;line-height:1.7;">Open-source work by Keshav Purohit — AI/ML, web dev &amp; tooling.</p>
+    </div>
+    <div class="repos-grid" id="repos-grid"></div>
+    <div style="text-align:center;margin-top:40px;">
+      <a href="https://github.com/Kpurohit007?tab=repositories" target="_blank" class="btn-outline">VIEW ALL 32 REPOS →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── SKILLS ── -->
+<section id="skills" style="background:var(--bg2);border-top:1px solid var(--br);">
+  <div class="inner">
+    <div class="reveal" style="margin-bottom:48px;">
+      <div class="sec-label">LANGUAGES_AND_TOOLS</div>
+      <h2 class="sec-title">TECH <span style="color:var(--g)">STACK</span></h2>
+    </div>
+    <div class="skills-grid" id="skills-grid"></div>
+  </div>
+</section>
+
+<!-- ── CONTACT ── -->
+<section id="contact">
+  <div class="inner">
+    <div class="contact-grid reveal">
+      <div>
+        <div class="sec-label">CONTACT</div>
+        <h2 class="sec-title">GET IN <span style="color:var(--g)">TOUCH</span></h2>
+        <p style="font-family:var(--body);font-size:1.05rem;color:var(--txt);line-height:1.8;margin-bottom:32px;">Collaborating on the hackathon? Hiring? Or just want to talk Mistral AI agents?</p>
+        <div class="terminal" id="terminal">
+          <div class="term-bar">
+            <div class="tdot" style="background:#ff5f57"></div>
+            <div class="tdot" style="background:#febc2e"></div>
+            <div class="tdot" style="background:#28c840"></div>
+            <span class="term-title">terminal — repolore-agent</span>
+          </div>
+          <div class="term-body" id="term-body"></div>
+        </div>
+        <div class="contact-links">
+          <a href="mailto:Techmunda21@gmail.com" class="cl-row"><span class="cl-key">EMAIL</span><span class="cl-val">Techmunda21@gmail.com</span></a>
+          <a href="https://www.linkedin.com/in/keshav-purohit-a2a36525b/" target="_blank" class="cl-row"><span class="cl-key">LINKEDIN</span><span class="cl-val">keshav-purohit-a2a36525b</span></a>
+          <a href="https://github.com/Kpurohit007" target="_blank" class="cl-row"><span class="cl-key">GITHUB</span><span class="cl-val">Kpurohit007 — 32 repos</span></a>
+          <a href="https://techmundaportfolio.netlify.app/" target="_blank" class="cl-row"><span class="cl-key">PORTFOLIO</span><span class="cl-val">techmundaportfolio.netlify.app</span></a>
+          <a href="https://orcid.org/0009-0004-3231-9371" target="_blank" class="cl-row"><span class="cl-key">ORCID</span><span class="cl-val">0009-0004-3231-9371</span></a>
+        </div>
+      </div>
+      <form class="form-wrap" id="contact-form">
+        <div class="form-section-label">// SEND_MESSAGE</div>
+        <div>
+          <label class="form-label">NAME</label>
+          <input type="text" id="f-name" class="form-input" placeholder="Your name" required/>
+        </div>
+        <div>
+          <label class="form-label">EMAIL</label>
+          <input type="email" id="f-email" class="form-input" placeholder="your@email.com" required/>
+        </div>
+        <div>
+          <label class="form-label">MESSAGE</label>
+          <textarea id="f-msg" class="form-input" rows="5" placeholder="Your message..." required></textarea>
+        </div>
+        <button type="submit" class="btn-submit" id="f-btn">SEND_MESSAGE →</button>
+        <div id="f-status" class="form-status"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="inner">
+    <div class="footer-grid">
+      <div>
+        <div class="f-logo">
+          <div class="f-dot"></div>
+          <span class="f-name">REPOLORE</span>
+          <span class="f-hack">HACKATHON_2026</span>
+        </div>
+        <p class="f-desc">Open-source 5-agent Mistral AI pipeline for SEO content generation. Mistral AI Worldwide Hackathon 2026 submission.</p>
+        <div class="f-badges">
+          <span class="f-badge" style="border:1px solid rgba(255,215,0,.35);color:var(--gold)">MISTRAL_AI_2026</span>
+          <span class="f-badge" style="border:1px solid rgba(0,255,136,.25);color:var(--gg)">OPEN_SOURCE</span>
+          <span class="f-badge" style="border:1px solid rgba(200,75,255,.3);color:var(--pu)">FREE_FOREVER</span>
+          <span class="f-badge" style="border:1px solid rgba(0,255,136,.25);color:var(--gg)">MIT_LICENSE</span>
+        </div>
+      </div>
+      <div class="f-col">
+        <div class="f-col-title">PRODUCT</div>
+        <a href="#home">Home</a>
+        <a href="#problem">Problem</a>
+        <a href="#agent">Agent Pipeline</a>
+        <a href="#repos">Repos</a>
+        <a href="#skills">Skills</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div class="f-col">
+        <div class="f-col-title">CONNECT</div>
+        <a href="https://github.com/Kpurohit007" target="_blank">GitHub</a>
+        <a href="https://www.linkedin.com/in/keshav-purohit-a2a36525b/" target="_blank">LinkedIn</a>
+        <a href="https://techmundaportfolio.netlify.app/" target="_blank">Portfolio</a>
+        <a href="https://worldwide-hackathon.mistral.ai/" target="_blank">Mistral Hackathon</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="f-copy">© 2026 REPOLORE // BUILT BY <span>KESHAV PUROHIT (TECHMUNDA)</span> // MAHARASHTRA, INDIA</span>
+      <span class="f-copy">🏆 MISTRAL AI WORLDWIDE HACKATHON 2026</span>
+    </div>
+  </div>
+</footer>
+
+<a href="#home" id="btt">↑</a>
+
+<script>
+// ══════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════
+const REPOS=[
+  {name:"AIML-Crop-Yield-Forecasting",desc:"Predictive AI/ML system to forecast crop yields & analyse market demand-supply trends.",lang:"Python/HTML",stars:2,tags:["AI/ML","Agriculture","Python"],url:"https://github.com/Kpurohit007/AIML-Driven-Crop-Yield-and-Market-Demand-Supply-Forecasting"},
+  {name:"weatherForcast",desc:"Real-time weather forecast website with live API credentials.",lang:"CSS/JS",stars:1,tags:["API","CSS"],url:"https://github.com/Kpurohit007/weatherForcast"},
+  {name:"Resume",desc:"Dynamic resume generator with automated email co-ordination.",lang:"HTML",stars:1,tags:["Resume","Email"],url:"https://github.com/Kpurohit007/Resume"},
+  {name:"coming-soon-",desc:"Sleek launch landing page template for product releases.",lang:"JS",stars:1,tags:["Landing","JS"],url:"https://github.com/Kpurohit007/coming-soon-"},
+  {name:"ChaosWeb",desc:"Creative chaos-driven web experiment playground.",lang:"JS",stars:1,tags:["Creative","JS"],url:"https://github.com/Kpurohit007/ChaosWeb"},
+  {name:"code-alpha-",desc:"Internship project — core web tech & frontend patterns.",lang:"HTML",stars:1,tags:["Internship"],url:"https://github.com/Kpurohit007/code-alpha-"},
+];
+const SKILLS=[
+  {name:"React",icon:"⚛️",level:90},{name:"Node.js",icon:"🟩",level:85},{name:"Python",icon:"🐍",level:82},
+  {name:"MongoDB",icon:"🍃",level:78},{name:"MySQL",icon:"🐬",level:80},{name:"PostgreSQL",icon:"🐘",level:72},
+  {name:"AWS",icon:"☁️",level:65},{name:"Java",icon:"☕",level:75},{name:"JavaScript",icon:"🟨",level:92},
+  {name:"PHP",icon:"🔵",level:68},{name:"Linux",icon:"🐧",level:70},{name:"Figma",icon:"🎨",level:76},
+  {name:"GenAI",icon:"🤖",level:80},{name:"Hadoop",icon:"📦",level:60},
+];
+const PIPELINE=[
+  {id:"01",icon:"🔍",title:"REPO_SCANNER",desc:"Connects to GitHub via function calling. Ingests commits, PRs, diffs, and release tags in real-time.",tech:["Mistral Function Calling","GitHub REST API","JSON Schema"]},
+  {id:"02",icon:"🧠",title:"CONTEXT_BUILDER",desc:"Clusters features semantically using Mistral embeddings. Maps topics to keyword opportunities and audience intent.",tech:["mistral-embed","RAG","Semantic Clustering"]},
+  {id:"03",icon:"✍️",title:"CONTENT_GENERATOR",desc:"Generates structured, brand-grounded blog posts, changelogs, and LinkedIn posts using your codebase as RAG source.",tech:["mistral-large-latest","Structured Output","Templates"]},
+  {id:"04",icon:"📊",title:"SEO_SCORER",desc:"Scores content on keyword density, readability, meta quality. Auto-refinement loop runs until target score (≥90) is hit.",tech:["W&B Weave","SERP API","Refinement Loop"]},
+  {id:"05",icon:"🚀",title:"PUBLISH_DISPATCHER",desc:"Dispatches to CMS, GitHub Pages, or newsletter. Tracks engagement. Voiced summary via ElevenLabs TTS.",tech:["REST Webhooks","ElevenLabs TTS","Scheduler"]},
+];
+const PROBLEMS=[
+  {icon:"⏱️",problem:"Developers ship great code but have zero time to write content.",solution:"Mistral agent auto-generates a publication-ready blog after every PR merge. Zero human effort required.",impact:"10x developer content output"},
+  {icon:"🔍",problem:"SEO requires expertise most dev teams simply don't have.",solution:"Built-in keyword clustering, competitor gap analysis, and meta-optimisation baked into the generation pipeline.",impact:"Rank on Day 1"},
+  {icon:"🎯",problem:"AI-generated content is generic and penalised by Google.",solution:"RAG over your own codebase — every piece is grounded in your real work, not hallucinated generic filler.",impact:"Authentic, rankable content"},
+  {icon:"🤖",problem:"Multi-agent systems are complex to build and maintain.",solution:"Mistral Agents API + function calling makes our 5-agent pipeline composable and observable via W&B in hours.",impact:"Ships in 48 hours ✓"},
+];
+const PRIZES=[
+  {title:"GLOBAL WINNER",val:"$10,000 CASH",sub:"$15,000 credits + Hiring at Mistral AI",c:"#ffd700"},
+  {title:"BEST USE OF AGENT SKILLS",val:"Reachy Mini Robot",sub:"Awarded by Hugging Face",c:"#00ff88"},
+  {title:"BEST USE OF ELEVENLABS",val:"$2,000/member",sub:"ElevenLabs credits",c:"#c84bff"},
+  {title:"BEST VIBE USAGE",val:"Custom AirPods",sub:"Hackathon branded",c:"#00cfff"},
+];
+const JUDGING=[
+  {c:"CREATIVITY",r:"No one has built a full agentic SEO pipeline on Mistral yet. Genuinely novel."},
+  {c:"TECHNICAL DEPTH",r:"5 coordinated Mistral agents, function calling, RAG, W&B observability. Deep stack."},
+  {c:"FUTURE POTENTIAL",r:"Every developer team globally is a potential user. Enormous TAM."},
+  {c:"PITCH QUALITY",r:"Live demo: point at any repo → watch content generate live in ~3 seconds."},
+];
+const ABOUT_INFO=[
+  ["UNIVERSITY","MIT WPU Pune"],["DEGREE","MCA"],["LOCATION","Maharashtra, IN"],
+  ["BRAND","TechMunda"],["HACKATHON","Mistral 2026"],["GOAL","Global Winner 🏆"],
+];
+const TECH_PILLS=[
+  ["PRIMARY MODEL","mistral-large-latest","#00ff88"],["AGENT FRAMEWORK","Mistral Agents API","#00ff88"],
+  ["OBSERVABILITY","W&B Weave","#00cfff"],["VOICE OUTPUT","ElevenLabs TTS","#c84bff"],
+  ["CODE CONTEXT","GitHub REST API","#8aa4c0"],["STORAGE","MongoDB / Vectors","#8aa4c0"],
+];
+const TICKER_ITEMS=["MISTRAL_AI_HACKATHON_2026","SEO_CONTENT_FOR_AGENTS","BEST_USE_OF_AGENT_SKILLS","48_HOURS","$200K_PRIZES","KESHAV_PUROHIT","TECHMUNDA","MIT_WPU_PUNE","MULTI_AGENT_PIPELINE","MISTRAL_LARGE_LATEST","RAG_POWERED","OPEN_SOURCE","FEB_28_MAR_1_2026","GLOBAL_WINNER_TARGET"];
+const TERM_LINES=[
+  {t:"prompt",v:"$ npx repolore generate --repo Kpurohit007/AIML-Crop"},
+  {t:"out",v:"⠸ Connecting to GitHub API..."},
+  {t:"out",v:"⠸ Fetching 47 commits from main..."},
+  {t:"out",v:"⠸ Analysing PRs via Mistral function calling..."},
+  {t:"ok",v:"✓ Agent 01 REPO_SCANNER — done (231ms)"},
+  {t:"ok",v:"✓ Agent 02 CONTEXT_BUILDER — 12 clusters"},
+  {t:"ok",v:"✓ Agent 03 CONTENT_GENERATOR — 1,240 words"},
+  {t:"ok",v:"✓ Agent 04 SEO_SCORER — score: 94/100"},
+  {t:"ok",v:"✓ Agent 05 PUBLISH_DISPATCHER — sent"},
+  {t:"blank",v:""},
+  {t:"label",v:"OUTPUT"},
+  {t:"out",v:"→ blog-post.md         1,240 words  ✓"},
+  {t:"out",v:"→ changelog.md         ready        ✓"},
+  {t:"out",v:"→ linkedin-post.txt    ready        ✓"},
+  {t:"out",v:"→ audio-summary.mp3    ElevenLabs   ✓"},
+  {t:"blank",v:""},
+  {t:"done",v:"✓ Done in 3.4s — tracked in W&B Weave"},
+];
+
+// ══════════════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ══════════════════════════════════════════════════
+
+// Ticker
+const tickerEl=document.getElementById("ticker");
+const all=[...TICKER_ITEMS,...TICKER_ITEMS];
+tickerEl.innerHTML=all.map(t=>`<span><span class="arrow">&gt; </span>${t}</span>`).join("");
+
+// Problem cards
+const pcEl=document.getElementById("problem-cards");
+PROBLEMS.forEach((p,i)=>{
+  pcEl.innerHTML+=`<div class="pcard reveal" style="transition-delay:${i*0.1}s">
+    <div class="pcard-icon">${p.icon}</div>
+    <div class="prob-label">❌ PROBLEM</div>
+    <p>${p.problem}</p>
+    <div class="sol-label" style="margin-top:14px">✓ SOLUTION</div>
+    <p>${p.solution}</p>
+    <span class="impact-badge">→ ${p.impact}</span>
+  </div>`;
+});
+
+// Judging grid
+const jgEl=document.getElementById("judging-grid");
+JUDGING.forEach(j=>{
+  jgEl.innerHTML+=`<div><div class="jt">${j.c}</div><p>${j.r}</p></div>`;
+});
+
+// Pipeline
+let activeAgent=0;
+function renderPipeline(){
+  const row=document.getElementById("pipeline-row");
+  row.innerHTML=PIPELINE.map((ag,i)=>`
+    <div class="pipeline-step">
+      <div class="ps-card ${activeAgent===i?"active":""}" onclick="setAgent(${i})">
+        <div class="ps-icon">${ag.icon}</div>
+        <div class="ps-id ${activeAgent===i?"active":""}">${ag.id}</div>
+        <div class="ps-title ${activeAgent===i?"active":""}">${ag.title}</div>
+        ${activeAgent===i?`<div class="ps-bar"></div>`:""}
+      </div>
+      ${i<PIPELINE.length-1?`<div class="ps-arrow ${activeAgent>i?"done":""}">→</div>`:""}
+    </div>
+  `).join("");
+  const ag=PIPELINE[activeAgent];
+  document.getElementById("agent-id").textContent=`AGENT ${ag.id} // ${ag.title}`;
+  document.getElementById("agent-desc").textContent=ag.desc;
+  document.getElementById("agent-tech").innerHTML=ag.tech.map(t=>`<span class="tag">${t}</span>`).join("");
+}
+window.setAgent=function(i){activeAgent=i;renderPipeline();}
+renderPipeline();
+setInterval(()=>{activeAgent=(activeAgent+1)%PIPELINE.length;renderPipeline();},2400);
+
+// Tech pills
+const tpEl=document.getElementById("tech-pills");
+TECH_PILLS.forEach(([l,v,c])=>{
+  tpEl.innerHTML+=`<div class="tpill"><div class="tpill-label">${l}</div><div class="tpill-val" style="color:${c}">${v}</div></div>`;
+});
+
+// Prizes
+const pgEl=document.getElementById("prize-grid");
+PRIZES.forEach((p,i)=>{
+  pgEl.innerHTML+=`<div class="pz-card reveal" style="border-color:${p.c}22;transition-delay:${i*0.08}s">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,${p.c},transparent)"></div>
+    <div class="pz-title" style="color:${p.c}">${p.title}</div>
+    <div class="pz-val" style="color:${p.c};text-shadow:0 0 18px ${p.c}44">${p.val}</div>
+    <div class="pz-sub">${p.sub}</div>
+  </div>`;
+});
+
+// About info
+const agEl=document.getElementById("about-grid");
+ABOUT_INFO.forEach(([k,v])=>{
+  agEl.innerHTML+=`<div class="info-cell"><div class="info-key">${k}</div><div class="info-val">${v}</div></div>`;
+});
+
+// Repos
+const rgEl=document.getElementById("repos-grid");
+REPOS.forEach((r,i)=>{
+  rgEl.innerHTML+=`<a href="${r.url}" target="_blank" class="repo-card reveal" style="transition-delay:${i*0.07}s">
+    <div class="repo-head"><span class="repo-name">${r.name}</span><span class="repo-stars">★ ${r.stars}</span></div>
+    <p class="repo-desc">${r.desc}</p>
+    <div class="repo-tags">
+      ${r.tags.map(t=>`<span class="tag tag-pu">${t}</span>`).join("")}
+      <span class="repo-lang">${r.lang}</span>
+    </div>
+  </a>`;
+});
+
+// Skills
+const sgEl=document.getElementById("skills-grid");
+SKILLS.forEach((s,i)=>{
+  sgEl.innerHTML+=`<div class="sk-card reveal" style="transition-delay:${i*0.04}s" data-level="${s.level}">
+    <div class="sk-icon">${s.icon}</div>
+    <div class="sk-name">${s.name}</div>
+    <div class="sk-bar-bg"><div class="sk-bar" data-level="${s.level}"></div></div>
+  </div>`;
+});
+
+// Terminal
+let termIdx=0;
+const termBody=document.getElementById("term-body");
+const COL={prompt:"var(--txtb)",out:"var(--txt)",ok:"var(--g)",blank:"",label:"var(--g)",done:"var(--g)"};
+function termTick(){
+  if(termIdx>=TERM_LINES.length)return;
+  const l=TERM_LINES[termIdx++];
+  let html="";
+  if(l.t==="blank"){html="&nbsp;";}
+  else if(l.t==="prompt"){html=`<span style="color:var(--g)">~/repolore </span>${l.v}`;}
+  else if(l.t==="label"){html=`<span style="color:var(--g)">OUTPUT</span>`;}
+  else{html=l.v;}
+  const line=document.createElement("div");
+  line.style.color=COL[l.t]||"var(--txt)";
+  line.innerHTML=html;
+  termBody.appendChild(line);
+  // keep cursor at end
+  let cur=termBody.querySelector(".t-cursor");
+  if(cur)cur.remove();
+  const c=document.createElement("span");
+  c.className="t-cursor";
+  termBody.appendChild(c);
+  termBody.scrollTop=termBody.scrollHeight;
+  setTimeout(termTick,termIdx===1?500:190);
+}
+
+// ══════════════════════════════════════════════════
+//  TYPEWRITER HERO
+// ══════════════════════════════════════════════════
+const typedEl=document.getElementById("typed");
+const full="5-agent Mistral AI pipeline that transforms GitHub PRs, commits & releases into SEO-optimised blog posts, changelogs & developer content — fully automatically.";
+let ti=0;
+function type(){
+  typedEl.textContent=full.slice(0,ti++);
+  if(ti<=full.length)setTimeout(type,18);
+}
+type();
+
+// ══════════════════════════════════════════════════
+//  COUNTER ANIMATION
+// ══════════════════════════════════════════════════
+function animateCounter(el){
+  const target=parseInt(el.dataset.target);
+  const sfx=el.dataset.sfx||"+";
+  let c=0;const step=target/60;
+  const t=setInterval(()=>{
+    c=Math.min(c+step,target);
+    el.textContent=Math.floor(c)+(c>=target?sfx:"");
+    if(c>=target)clearInterval(t);
+  },16);
+}
+
+// ══════════════════════════════════════════════════
+//  INTERSECTION OBSERVER — reveal + skills + counters
+// ══════════════════════════════════════════════════
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting)return;
+    const el=e.target;
+
+    // generic reveal
+    if(el.classList.contains("reveal"))el.classList.add("visible");
+
+    // skill bars
+    if(el.classList.contains("sk-card")){
+      const bar=el.querySelector(".sk-bar");
+      if(bar){setTimeout(()=>{bar.style.width=bar.dataset.level+"%";},100);}
+      el.classList.add("visible");
+    }
+
+    // counters
+    if(el.id==="stats-row"){
+      el.querySelectorAll("[data-target]").forEach(animateCounter);
+    }
+
+    io.unobserve(el);
+  });
+},{threshold:0.12});
+
+document.querySelectorAll(".reveal,.sk-card").forEach(el=>io.observe(el));
+io.observe(document.getElementById("stats-row"));
+
+// Start terminal when contact section visible
+const contactIo=new IntersectionObserver((entries)=>{
+  if(entries[0].isIntersecting){termTick();contactIo.disconnect();}
+},{threshold:0.1});
+contactIo.observe(document.getElementById("contact"));
+
+// ══════════════════════════════════════════════════
+//  NAV SCROLL
+// ══════════════════════════════════════════════════
+window.addEventListener("scroll",()=>{
+  document.getElementById("nav").classList.toggle("scrolled",window.scrollY>50);
+  document.getElementById("btt").classList.toggle("visible",window.scrollY>500);
+});
+
+// ══════════════════════════════════════════════════
+//  CONTACT FORM
+// ══════════════════════════════════════════════════
+document.getElementById("contact-form").addEventListener("submit",async(e)=>{
+  e.preventDefault();
+  const btn=document.getElementById("f-btn");
+  const status=document.getElementById("f-status");
+  const name=document.getElementById("f-name").value.trim();
+  const email=document.getElementById("f-email").value.trim();
+  const msg=document.getElementById("f-msg").value.trim();
+  if(!name||!email||!msg){status.style.color="#ffa500";status.textContent="Please fill all fields.";return;}
+  btn.disabled=true;btn.textContent="SENDING...";
+  try{
+    const r=await fetch("/api/contact",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,email,message:msg})});
+    const d=await r.json();
+    if(d.success){
+      status.style.color="var(--g)";status.textContent="MESSAGE_SENT ✓";
+      document.getElementById("f-name").value="";
+      document.getElementById("f-email").value="";
+      document.getElementById("f-msg").value="";
+    }else{status.style.color="#ffa500";status.textContent="Error — try again.";}
+  }catch{
+    status.style.color="var(--g)";status.textContent="Message noted — reply at Techmunda21@gmail.com";
+  }
+  btn.disabled=false;btn.textContent="SEND_MESSAGE →";
+  setTimeout(()=>status.textContent="",5000);
+});
+</script>
+</body>
+</html>
